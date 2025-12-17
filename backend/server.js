@@ -17,6 +17,7 @@ const submitRouter = require('./routes/submit');
 const adminRouter = require('./routes/admin');
 
 app.use('/api/questions', questionsRouter);
+app.use('/api/responses', questionsRouter); // For POST /api/responses
 app.use('/api/submit-question', submitRouter);
 app.use('/api/admin', adminRouter);
 
