@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>How Much You Need?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>How Much You Need?</h1>
+            <p class="subtitle">스와이프해서 다음 질문을 확인하세요</p>
+        </header>
+
+        <!-- Main Card Container -->
+        <div class="cards-wrapper">
+            <div class="card-stack" id="cardStack">
+                <!-- Cards will be dynamically generated here -->
+            </div>
+        </div>
+
+        <!-- Swipe Hint -->
+        <div class="swipe-hint" id="swipeHint">
+            <div class="hint-item">
+                <span class="hint-icon">↑</span>
+                <span>건너뛰기</span>
+            </div>
+            <div class="hint-item">
+                <span class="hint-icon">←</span>
+                <span>결과 보기</span>
+            </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="progress-indicator" id="progressIndicator">
+            <span id="currentTask">1</span> / <span id="totalTasks">10</span>
+        </div>
+
+        <!-- Add Question Button -->
+        <button class="add-question-btn" id="addQuestionBtn" title="질문 추가하기">
+            <span class="add-icon">+</span>
+        </button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
