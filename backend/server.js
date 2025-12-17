@@ -6,6 +6,9 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - required for Render/Heroku/etc
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors());  // Allow all origins for now
 app.use(express.json());
