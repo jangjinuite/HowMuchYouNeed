@@ -1,5 +1,5 @@
 // API Configuration
-const API_URL = 'http://localhost:3000'; // Change to your deployed URL later
+const API_URL = 'https://howmuchyouneed-api.onrender.com'; // Production backend
 
 // App State
 let currentTaskIndex = 0;
