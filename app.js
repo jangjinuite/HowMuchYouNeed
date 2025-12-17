@@ -261,8 +261,15 @@ function createStatsView(task, stats, userAnswer) {
 function createHistogram(stats, userAnswer, isLogScale = false) {
     const histogram = stats.histogram || [0, 0, 0, 0, 0, 0, 0];
     const maxHeight = Math.max(...histogram, 1);
-    const min = stats.min || stats.min_amount || 0;
-    const max = stats.max || stats.max_amount || 1000000;
+    let min = stats.min || stats.min_amount || 0;
+    let max = stats.max || stats.max_amount || min;
+
+    // Handle edge case where min equals max
+    if (min === max) {
+        min = Math.max(0, max * 0.8);
+        max = max * 1.2;
+    }
+
     const rangeSize = (max - min) / histogram.length;
     const userBarIndex = Math.min(
         Math.floor((userAnswer - min) / rangeSize),
@@ -277,12 +284,15 @@ function createHistogram(stats, userAnswer, isLogScale = false) {
         const isUserBar = index === userBarIndex;
         const barClass = isUserBar ? 'user-bar' : '';
 
+        // Calculate the range start for this bar
+        const rangeStart = min + index * rangeSize;
+
         return `
             <div class="histogram-bar ${barClass}">
-                <div class="bar-fill" style="height: ${height}%">
+                <div class="bar-fill" style="height: ${Math.max(height, 0)}%">
                     ${isUserBar ? '<div class="user-marker">👤</div>' : ''}
                 </div>
-                <div class="bar-label">${formatHistogramLabel(min + index * rangeSize, min + (index + 1) * rangeSize)}</div>
+                <div class="bar-label">${formatHistogramLabel(rangeStart)}</div>
             </div>
         `;
     }).join('');
@@ -612,15 +622,11 @@ function formatCurrency(amount) {
     }
 }
 
-function formatHistogramLabel(min, max) {
-    const formatShort = (amount) => {
-        if (amount >= 100000000) return `${(amount / 100000000).toFixed(0)}억`;
-        if (amount >= 10000) return `${(amount / 10000).toFixed(0)}만`;
-        if (amount >= 1000) return `${(amount / 1000).toFixed(0)}천`;
-        return `${amount}`;
-    };
-
-    return `${formatShort(min)}~${formatShort(max)}`;
+function formatHistogramLabel(amount) {
+    if (amount >= 100000000) return `${(amount / 100000000).toFixed(0)}억`;
+    if (amount >= 10000) return `${(amount / 10000).toFixed(0)}만`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(0)}천`;
+    return `${Math.round(amount)}`;
 }
 
 function calculatePercentile(userAnswer, stats) {
