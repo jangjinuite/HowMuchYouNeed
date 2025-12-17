@@ -46,7 +46,7 @@ async function fetchStats(questionId) {
 
 async function submitResponse(questionId, amount) {
     try {
-        const response = await fetch(`${API_URL}/api/responses`, {
+        const response = await fetch(`${API_URL}/api/questions/responses`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
