@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? ['https://your-app.vercel.app'] // Update this with your Vercel URL
+        ? ['https://howmuchyouneed.vercel.app'] // Production Vercel URL
         : '*'
 }));
 app.use(express.json());
