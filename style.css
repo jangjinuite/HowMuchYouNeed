@@ -362,10 +362,52 @@ body {
     opacity: 1;
 }
 
-.histogram-bar.user-bar {
-    background: linear-gradient(180deg, var(--success), #059669);
-    opacity: 1;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+.histogram-bar.user-bar .bar-fill {
+    background: linear-gradient(180deg, #fbbf24, #f59e0b) !important;
+    opacity: 1 !important;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    position: relative;
+}
+
+.user-marker {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    50% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
+.bar-fill {
+    width: 100%;
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    border-radius: 4px 4px 0 0;
+    position: relative;
+    transition: var(--transition);
+    opacity: 0.7;
+}
+
+.bar-label {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-45deg);
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transform-origin: top left;
 }
 
 .histogram-label {
@@ -436,38 +478,34 @@ body {
     z-index: 100;
 }
 
-/* Add Question Button */
-.add-question-btn {
-    position: absolute;
-    bottom: 2rem;
-    right: 2rem;
-    width: 56px;
-    height: 56px;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    border: none;
-    border-radius: 50%;
-    color: white;
-    font-size: 2rem;
+/* Suggest Question Button */
+.suggest-question-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: rgba(30, 41, 59, 0.95);
+    border: 2px solid var(--primary-color);
+    border-radius: 25px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-    transition: var(--transition);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
     z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
 }
 
-.add-question-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.6);
+.suggest-question-btn:hover {
+    transform: translateX(-50%) translateY(-2px);
+    background: rgba(99, 102, 241, 0.2);
+    box-shadow: 0 6px 30px rgba(99, 102, 241, 0.5);
 }
 
-.add-question-btn:active {
-    transform: scale(0.95);
-}
-
-.add-icon {
-    line-height: 1;
+.suggest-question-btn:active {
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Responsive Design */
