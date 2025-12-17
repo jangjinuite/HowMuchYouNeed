@@ -200,10 +200,12 @@ function createInputView(task) {
                     placeholder="0" 
                     id="amountInput${task.id}"
                     min="0"
+                    max="1000000000000"
                     step="10000"
                 >
                 <span class="currency-label">원</span>
             </div>
+            <div class="input-error-message" id="errorMessage${task.id}"></div>
             <div class="quick-buttons">
                 <button class="quick-btn" data-multiplier="10000">×만</button>
                 <button class="quick-btn" data-multiplier="100000">×10만</button>
@@ -277,9 +279,14 @@ function createHistogram(stats, userAnswer, isLogScale = false) {
     );
 
     const bars = histogram.map((value, index) => {
-        const height = isLogScale
+        let height = isLogScale
             ? Math.log10(value + 1) / Math.log10(maxHeight + 1) * 100
             : value / maxHeight * 100;
+
+        // Ensure minimum visible height for bars with data
+        if (value > 0 && height < 20) {
+            height = 20;
+        }
 
         const isUserBar = index === userBarIndex;
         const barClass = isUserBar ? 'user-bar' : '';
@@ -510,19 +517,32 @@ async function handleLeftSwipe(card) {
     if (mode === 'input') {
         // Save answer and show stats
         const input = card.querySelector('.amount-input');
+        const taskIndex = parseInt(card.dataset.taskIndex);
+        const task = questions[taskIndex];
+        const errorMessageEl = document.getElementById(`errorMessage${task.id}`);
         const amount = parseInt(input?.value || 0);
 
-        if (amount <= 0) {
-            // Show error feedback
-            input?.classList.add('error');
+        // Clear previous errors
+        if (errorMessageEl) {
+            errorMessageEl.textContent = '';
+            errorMessageEl.classList.remove('show');
+        }
+        input?.classList.remove('error');
+
+        // Validation
+        if (!amount || amount <= 0) {
+            showInputError(input, errorMessageEl, '💸 금액을 입력해주세요!');
             card.style.transform = '';
             card.classList.remove('swiping-left');
-            setTimeout(() => input?.classList.remove('error'), 300);
             return;
         }
 
-        const taskIndex = parseInt(card.dataset.taskIndex);
-        const task = questions[taskIndex];
+        if (amount > 1000000000000) {
+            showInputError(input, errorMessageEl, '🚫 1조원을 초과할 수 없습니다!');
+            card.style.transform = '';
+            card.classList.remove('swiping-left');
+            return;
+        }
 
         // Show loading state
         card.innerHTML = '<div style="text-align: center; padding: 3rem;"><div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div><div style="color: var(--text-secondary); font-size: 1.1rem;">답변 제출 중...</div></div>';
@@ -607,6 +627,25 @@ function showCompletionScreen() {
 }
 
 // Utility Functions
+function showInputError(input, errorMessageEl, message) {
+    // Add error class to input
+    input?.classList.add('error');
+
+    // Show error message
+    if (errorMessageEl) {
+        errorMessageEl.textContent = message;
+        errorMessageEl.classList.add('show');
+    }
+
+    // Auto-clear after 3 seconds
+    setTimeout(() => {
+        input?.classList.remove('error');
+        if (errorMessageEl) {
+            errorMessageEl.classList.remove('show');
+        }
+    }, 3000);
+}
+
 function formatCurrency(amount) {
     if (!amount || amount === null || amount === undefined) return '0원';
 
@@ -642,22 +681,6 @@ function getComparisonMessage(percentile) {
     if (percentile < 75) return "평균보다 조금 높은 금액이에요 🤔";
     return "대부분의 사람들보다 비싸게 받고 싶으시군요! 💰";
 }
-
-// Add error style for input
-const style = document.createElement('style');
-style.textContent = `
-    .amount-input.error {
-        border-color: #ef4444 !important;
-        animation: shake 0.3s;
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-10px); }
-        75% { transform: translateX(10px); }
-    }
-`;
-document.head.appendChild(style);
 
 // Add Question Button Handler
 document.addEventListener('DOMContentLoaded', () => {
