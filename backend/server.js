@@ -7,11 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? ['https://howmuchyouneed.vercel.app'] // Production Vercel URL
-        : '*'
-}));
+app.use(cors());  // Allow all origins for now
 app.use(express.json());
 app.use(apiLimiter);
 
