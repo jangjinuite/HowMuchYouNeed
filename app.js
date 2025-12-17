@@ -279,13 +279,20 @@ function createHistogram(stats, userAnswer, isLogScale = false) {
     );
 
     const bars = histogram.map((value, index) => {
-        let height = isLogScale
-            ? Math.log10(value + 1) / Math.log10(maxHeight + 1) * 100
-            : value / maxHeight * 100;
+        let height = 0;
 
-        // Ensure minimum visible height for bars with data
-        if (value > 0 && height < 20) {
-            height = 20;
+        if (value > 0) {
+            if (isLogScale) {
+                height = Math.log10(value + 1) / Math.log10(maxHeight + 1) * 95;
+            } else {
+                // Scale so maximum value is at 95% height
+                height = (value / maxHeight) * 95;
+            }
+
+            // Ensure minimum visible height for bars with data (5%)
+            if (height < 5) {
+                height = 5;
+            }
         }
 
         const isUserBar = index === userBarIndex;
@@ -296,7 +303,7 @@ function createHistogram(stats, userAnswer, isLogScale = false) {
 
         return `
             <div class="histogram-bar ${barClass}">
-                <div class="bar-fill" style="height: ${Math.max(height, 0)}%">
+                <div class="bar-fill" style="height: ${height}%">
                     ${isUserBar ? '<div class="user-marker">👤</div>' : ''}
                 </div>
                 <div class="bar-label">${formatHistogramLabel(rangeStart)}</div>
