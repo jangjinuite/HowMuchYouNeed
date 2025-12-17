@@ -121,6 +121,8 @@ function renderCard(taskIndex, mode, animateSlideUp = false) {
 
     if (mode === 'input') {
         card.innerHTML = createInputView(task);
+        // Add event listeners for input mode immediately
+        addCardEventListeners(card);
     } else {
         // Show loading state first
         card.innerHTML = '<div class="loading" style="text-align: center; padding: 2rem; color: var(--text-secondary);">📊 최신 통계를 불러오는 중...</div>';
@@ -132,9 +134,15 @@ function renderCard(taskIndex, mode, animateSlideUp = false) {
         setTimeout(() => {
             fetchStats(task.id).then(stats => {
                 if (stats) {
+                    // Store stats in card dataset for log scale toggle
+                    card.dataset.stats = JSON.stringify(stats);
                     card.innerHTML = createStatsView(task, stats, userAnswer ? userAnswer.amount : 0);
+                    // Add event listeners AFTER stats are loaded and rendered
                     addCardEventListeners(card);
                 }
+            }).catch(error => {
+                console.error('Failed to load stats:', error);
+                card.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">통계를 불러오는데 실패했습니다.</div>';
             });
         }, 500); // 500ms delay to ensure backend processed the submission
     }
@@ -156,9 +164,6 @@ function renderCard(taskIndex, mode, animateSlideUp = false) {
             card.style.opacity = '1';
         }, 10);
     }
-
-    // Add event listeners
-    addCardEventListeners(card);
 
     // Update progress
     currentTaskEl.textContent = taskIndex + 1;
@@ -339,7 +344,22 @@ function addCardEventListeners(card) {
         logScaleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             useLogScale = !useLogScale;
-            renderCard(currentTaskIndex, 'stats', false);
+
+            // Update only the histogram without re-fetching stats
+            const histogramContainer = card.querySelector('.histogram');
+            if (histogramContainer && card.dataset.stats) {
+                const task = questions[currentTaskIndex];
+                const stats = JSON.parse(card.dataset.stats);
+                const userAnswer = userAnswers.find(a => a.taskId === task.id);
+                const userAmount = userAnswer ? userAnswer.amount : 0;
+
+                histogramContainer.outerHTML = createHistogram(stats, userAmount, useLogScale);
+                // Re-attach event listener to the new toggle button
+                const newLogScaleBtn = card.querySelector('#logScaleToggle');
+                if (newLogScaleBtn) {
+                    newLogScaleBtn.addEventListener('click', arguments.callee);
+                }
+            }
         });
     }
 }
@@ -590,6 +610,17 @@ function formatCurrency(amount) {
     } else {
         return `${numAmount.toLocaleString()}원`;
     }
+}
+
+function formatHistogramLabel(min, max) {
+    const formatShort = (amount) => {
+        if (amount >= 100000000) return `${(amount / 100000000).toFixed(0)}억`;
+        if (amount >= 10000) return `${(amount / 10000).toFixed(0)}만`;
+        if (amount >= 1000) return `${(amount / 1000).toFixed(0)}천`;
+        return `${amount}`;
+    };
+
+    return `${formatShort(min)}~${formatShort(max)}`;
 }
 
 function calculatePercentile(userAnswer, stats) {
