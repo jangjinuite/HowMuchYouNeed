@@ -110,16 +110,20 @@ function renderCard(taskIndex, mode, animateSlideUp = false) {
         card.innerHTML = createInputView(task);
     } else {
         // Show loading state first
-        card.innerHTML = '<div class="loading">통계를 불러오는 중...</div>';
+        card.innerHTML = '<div class="loading" style="text-align: center; padding: 2rem; color: var(--text-secondary);">📊 최신 통계를 불러오는 중...</div>';
 
-        // Load stats from API
+        // Load FRESH stats from API (will include just-submitted answer)
         const userAnswer = userAnswers.find(a => a.taskId === task.id);
-        fetchStats(task.id).then(stats => {
-            if (stats) {
-                card.innerHTML = createStatsView(task, stats, userAnswer ? userAnswer.amount : 0);
-                addCardEventListeners(card);
-            }
-        });
+
+        // Wait a bit for backend to process the new response
+        setTimeout(() => {
+            fetchStats(task.id).then(stats => {
+                if (stats) {
+                    card.innerHTML = createStatsView(task, stats, userAnswer ? userAnswer.amount : 0);
+                    addCardEventListeners(card);
+                }
+            });
+        }, 500); // 500ms delay to ensure backend processed the submission
     }
 
     // Apply slide-up animation if requested
@@ -247,33 +251,35 @@ function createHistogram(stats, userAnswer, isLogScale = false) {
         histogram.length - 1
     );
 
-    const bars = stats.histogram.map((value, index) => {
-        let height;
-        if (isLogScale) {
-            const logValue = Math.log10(value + 1);
-            const maxLogValue = Math.log10(maxHeight + 1);
-            height = (logValue / maxLogValue) * 100;
-        } else {
-            height = (value / maxHeight) * 100;
-        }
+    const bars = histogram.map((value, index) => {
+        const height = isLogScale
+            ? Math.log10(value + 1) / Math.log10(maxHeight + 1) * 100
+            : value / maxHeight * 100;
+
         const isUserBar = index === userBarIndex;
-        return `<div class="histogram-bar ${isUserBar ? 'user-bar' : ''}" style="height: ${height}%"></div>`;
+        const barClass = isUserBar ? 'user-bar' : '';
+
+        return `
+            <div class="histogram-bar ${barClass}">
+                <div class="bar-fill" style="height: ${height}%">
+                    ${isUserBar ? '<div class="user-marker">👤</div>' : ''}
+                </div>
+                <div class="bar-label">${formatHistogramLabel(min + index * rangeSize, min + (index + 1) * rangeSize)}</div>
+            </div>
+        `;
     }).join('');
 
+    const toggleText = isLogScale ? '선형 스케일' : '로그 스케일';
+
     return `
-        <div class="histogram-container">
+        <div class="histogram">
             <div class="histogram-header">
-                <div class="histogram-title">응답 분포</div>
-                <button class="log-scale-toggle" id="logScaleToggle">
-                    ${isLogScale ? '선형' : '로그'} 스케일
-                </button>
+                <div class="histogram-title">답변 분포</div>
+                <button class="log-scale-toggle" id="logScaleToggle">${toggleText}</button>
             </div>
-            <div class="histogram">
+            <div class="histogram-bars">
                 ${bars}
             </div>
-            <div class="histogram-label">
-                <span>${formatCurrency(stats.min)}</span>
-                <span>${formatCurrency(stats.max)}</span>
             </div>
         </div>
     `;
@@ -475,13 +481,15 @@ async function handleLeftSwipe(card) {
         const taskIndex = parseInt(card.dataset.taskIndex);
         const task = questions[taskIndex];
 
+        // Show loading state
+        card.innerHTML = '<div style="text-align: center; padding: 3rem;"><div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div><div style="color: var(--text-secondary); font-size: 1.1rem;">답변 제출 중...</div></div>';
+
         // Submit to backend API
         const success = await submitResponse(task.id, amount);
 
         if (!success) {
             alert('답변 제출에 실패했습니다. 다시 시도해주세요.');
-            card.style.transform = '';
-            card.classList.remove('swiping-left');
+            renderCard(currentTaskIndex, 'input'); // Restore input view
             return;
         }
 
@@ -490,13 +498,13 @@ async function handleLeftSwipe(card) {
             amount: amount
         });
 
-        // Fade out current card and slide up stats
-        card.style.transition = 'opacity 0.3s ease-out';
-        card.style.opacity = '0';
+        // Update loading message
+        card.innerHTML = '<div style="text-align: center; padding: 3rem;"><div style="font-size: 2rem; margin-bottom: 1rem;">📊</div><div style="color: var(--text-secondary); font-size: 1.1rem;">결과를 불러오는 중...</div></div>';
 
+        // Wait a moment then show stats
         setTimeout(() => {
             currentMode = 'stats';
-            renderCard(currentTaskIndex, 'stats', true); // true = animate slide up
+            renderCard(currentTaskIndex, 'stats', true);
         }, 300);
     } else {
         // Move to next task
@@ -603,16 +611,82 @@ document.head.appendChild(style);
 
 // Add Question Button Handler
 document.addEventListener('DOMContentLoaded', () => {
+    // Question suggestion modal
     const addQuestionBtn = document.getElementById('addQuestionBtn');
+    const modal = document.getElementById('questionModal');
+    const modalContent = document.getElementById('modalContent');
+    const questionInput = document.getElementById('questionInput');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalSubmit = document.getElementById('modalSubmit');
+
+    function openModal() {
+        modal.classList.add('active');
+        questionInput.value = '';
+        setTimeout(() => questionInput.focus(), 300);
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    function showSuccess(questionText) {
+        modalContent.innerHTML = `
+            <div class="modal-success">
+                <div class="modal-success-icon">✨</div>
+                <div class="modal-success-message">질문이 제출되었습니다!</div>
+                <div class="modal-success-sub">"${questionText}"</div>
+                <div class="modal-success-sub" style="margin-top: 1rem;">관리자 승인 후 게임에 추가됩니다.</div>
+            </div>
+        `;
+        setTimeout(() => closeModal(), 2500);
+    }
+
     if (addQuestionBtn) {
-        addQuestionBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const questionText = prompt('새로운 질문을 입력하세요:\n예) 공공장소에서 큰 소리로 전화하기');
-            if (questionText && questionText.trim()) {
-                alert(`질문이 제출되었습니다!\n\n"${questionText}"\n\n백엔드 구현 후 실제로 추가됩니다.`);
+        addQuestionBtn.addEventListener('click', openModal);
+    }
+
+    if (modalCancel) {
+        modalCancel.addEventListener('click', closeModal);
+    }
+
+    if (modalSubmit) {
+        modalSubmit.addEventListener('click', async () => {
+            const text = questionInput.value.trim();
+            if (!text) {
+                questionInput.focus();
+                return;
+            }
+
+            modalSubmit.disabled = true;
+            modalSubmit.textContent = '제출 중...';
+
+            const result = await submitQuestion(text);
+
+            if (result.error) {
+                alert(result.error);
+                modalSubmit.disabled = false;
+                modalSubmit.textContent = '제출';
+            } else {
+                showSuccess(text);
+                modalSubmit.disabled = false;
+                modalSubmit.textContent = '제출';
             }
         });
     }
+
+    // Close modal on overlay click
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
 });
 
 // Start the app

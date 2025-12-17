@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>How Much You Need?</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="modal.css">
 </head>
 
 <body>
@@ -40,10 +41,23 @@
             <span id="currentTask">1</span> / <span id="totalTasks">10</span>
         </div>
 
-        <!-- Add Question Button -->
-        <button class="add-question-btn" id="addQuestionBtn" title="질문 추가하기">
-            <span class="add-icon">+</span>
+        <button class="suggest-question-btn" id="addQuestionBtn">
+            💡 질문 제안하기
         </button>
+    </div>
+
+    <!-- Modal for Question Suggestion -->
+    <div class="modal-overlay" id="questionModal">
+        <div class="modal" id="modalContent">
+            <div class="modal-header">💡 새로운 질문 제안하기</div>
+            <div class="modal-subtitle">얼마를 받으면 하시겠어요? 형식의 재미있는 질문을 제안해주세요!</div>
+            <input type="text" class="modal-input" id="questionInput" placeholder="예) 공공장소에서 큰 소리로 전화하기"
+                maxlength="100">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" id="modalCancel">취소</button>
+                <button class="modal-btn modal-btn-primary" id="modalSubmit">제출</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
