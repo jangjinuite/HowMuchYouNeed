@@ -341,24 +341,31 @@ body {
 }
 
 .histogram {
+    padding: 1rem;
+    background: var(--surface-light);
+    border-radius: 12px;
+}
+
+.histogram-bars {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     height: 200px;
-    gap: 4px;
+    gap: 6px;
+    padding-bottom: 30px;
+    position: relative;
 }
 
 .histogram-bar {
     flex: 1;
-    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
-    border-radius: 4px 4px 0 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     position: relative;
     min-height: 2px;
-    transition: var(--transition);
-    opacity: 0.6;
 }
 
-.histogram-bar:hover {
+.histogram-bar:hover .bar-fill {
     opacity: 1;
 }
 
@@ -403,11 +410,11 @@ body {
     position: absolute;
     bottom: -25px;
     left: 50%;
-    transform: translateX(-50%) rotate(-45deg);
+    transform: translateX(-50%);
     font-size: 0.65rem;
     color: var(--text-secondary);
     white-space: nowrap;
-    transform-origin: top left;
+    text-align: center;
 }
 
 .histogram-label {
