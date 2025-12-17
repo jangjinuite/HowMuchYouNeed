@@ -455,7 +455,7 @@ function handleUpSwipe(card) {
     });
 }
 
-function handleLeftSwipe(card) {
+async function handleLeftSwipe(card) {
     const mode = card.dataset.mode;
 
     if (mode === 'input') {
@@ -474,6 +474,16 @@ function handleLeftSwipe(card) {
 
         const taskIndex = parseInt(card.dataset.taskIndex);
         const task = questions[taskIndex];
+
+        // Submit to backend API
+        const success = await submitResponse(task.id, amount);
+
+        if (!success) {
+            alert('답변 제출에 실패했습니다. 다시 시도해주세요.');
+            card.style.transform = '';
+            card.classList.remove('swiping-left');
+            return;
+        }
 
         userAnswers.push({
             taskId: task.id,
