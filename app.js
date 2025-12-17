@@ -279,19 +279,16 @@ function createHistogram(stats, userAnswer, isLogScale = false) {
     );
 
     const bars = histogram.map((value, index) => {
-        let height = 0;
+        let height = 1; // Minimum 1px for all bars to be visible
 
         if (value > 0) {
+            // Scale from 10% to 95% based on value
             if (isLogScale) {
-                height = Math.log10(value + 1) / Math.log10(maxHeight + 1) * 95;
+                const logRatio = Math.log10(value + 1) / Math.log10(maxHeight + 1);
+                height = 10 + (logRatio * 85); // 10% to 95%
             } else {
-                // Scale so maximum value is at 95% height
-                height = (value / maxHeight) * 95;
-            }
-
-            // Ensure minimum visible height for bars with data (5%)
-            if (height < 5) {
-                height = 5;
+                const ratio = value / maxHeight;
+                height = 10 + (ratio * 85); // 10% to 95%
             }
         }
 
