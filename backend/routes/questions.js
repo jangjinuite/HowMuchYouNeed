@@ -81,21 +81,28 @@ router.get('/stats/:questionId', async (req, res) => {
  * Submit a response to a question
  */
 router.post('/responses', responseLimiter, async (req, res) => {
+    console.log('📩 Received response submission:', req.body);
+
     try {
         const { questionId, amount } = req.body;
         const userIp = req.ip || req.connection.remoteAddress;
 
+        console.log('👤 User IP:', userIp);
+
         // Validate input
         if (!questionId || amount === undefined) {
+            console.log('❌ Validation failed: missing data');
             return res.status(400).json({ error: '질문 ID와 금액이 필요합니다.' });
         }
 
         if (amount < 0 || amount > 100000000) {
+            console.log('❌ Validation failed: invalid amount');
             return res.status(400).json({ error: '유효하지 않은 금액입니다.' });
         }
 
+        console.log('✅ Validation passed');
+
         // Check if user already responded to this question (optional)
-        // You can remove this if you want to allow multiple responses
         const { data: existing } = await supabase
             .from('responses')
             .select('id')
@@ -104,8 +111,11 @@ router.post('/responses', responseLimiter, async (req, res) => {
             .single();
 
         if (existing) {
+            console.log('⚠️ Duplicate response detected');
             return res.status(400).json({ error: '이미 이 질문에 답변하셨습니다.' });
         }
+
+        console.log('💾 Inserting to database...');
 
         // Insert response
         const { error } = await supabase
@@ -116,7 +126,12 @@ router.post('/responses', responseLimiter, async (req, res) => {
                 user_ip: userIp
             });
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ DB Insert Error:', error);
+            throw error;
+        }
+
+        console.log('✅ Successfully inserted to DB');
 
         // Update stats in background
         updateStatsCache(questionId).catch(console.error);
@@ -126,7 +141,7 @@ router.post('/responses', responseLimiter, async (req, res) => {
             message: '답변이 제출되었습니다.'
         });
     } catch (error) {
-        console.error('Error submitting response:', error);
+        console.error('💥 Error submitting response:', error);
         res.status(500).json({ error: '답변 제출에 실패했습니다.' });
     }
 });
